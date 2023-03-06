@@ -7,6 +7,7 @@ import java.util.Scanner;
 public class PythonTokenizer {
 
     private static final String fileWithCodePath = "C:\\Users\\Aleksej\\Desktop\\in1.py";
+    private static TokensMap tokensMap = new TokensMap();
 
     public static void main(String[] args) {
         tokenize(readCodeFromFile(fileWithCodePath));
@@ -26,23 +27,29 @@ public class PythonTokenizer {
         return res.toString();
     }
 
-    public static LinkedList<Record> tokenize(String code) {
+    private static TokenType getTokenType(String key){
+        return tokensMap.getMap().get(key);
+    }
+
+    public static LinkedList<TToken> tokenize(String code) {
         StringWriter a = new StringWriter(100);
-        LinkedList<Record> res = new LinkedList<>();
+        LinkedList<TToken> res = new LinkedList<>();
 
         try (PythonInterpreter interpreter = new PythonInterpreter()) {
             interpreter.setIn(new StringReader(code));
-            interpreter.execfile("C:\\Users\\Aleksej\\Downloads\\jython2.7.3\\Lib\\tokenize.py");
             interpreter.setOut(a);
+            interpreter.execfile("C:\\Users\\Aleksej\\Downloads\\jython2.7.3\\Lib\\tokenize.py");
         }
 
         Scanner vConsole = new Scanner(a.toString());
         String[] lineGroup;
         while (vConsole.hasNextLine()){
-            lineGroup = vConsole.nextLine().split(" ");
-            if (lineGroup != null) for (int i = 0; i<lineGroup.length;i++) System.out.println(lineGroup[i]);
-//            if (lineGroup.contains("NAME")) res.add(new TToken(Model.getTokenType()))
+            lineGroup = vConsole.nextLine().split("\t");
+            lineGroup[2] = lineGroup[2].substring(1, lineGroup[2].length()-1);
+            if (lineGroup[1].compareTo("NAME") == 0) res.add(new TToken(lineGroup[2], getTokenType(lineGroup[2])));
         }
+
+        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
 
         return null;
     }

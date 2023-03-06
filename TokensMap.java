@@ -3,23 +3,26 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Model{
-    private static HashMap<String, TokenType> mainKeywords;
+public class TokensMap {
+    private HashMap<String, TokenType> mainKeywords;
 
-    public static void main(String[] args) {
+//    public static void main(String[] args) {
+//        initMainKeywords();
+//        System.out.println(getTokensFromFile("C:\\Users\\Aleksej\\Desktop\\in.txt"));
+//    }
+
+    public TokensMap(){
         initMainKeywords();
-        System.out.println(getTokensFromFile("C:\\Users\\Aleksej\\Desktop\\in.txt"));
     }
 
-    public static TokenType getTokenType(String key){
-        return mainKeywords.get(key);
+    public HashMap<String, TokenType> getMap(){
+        return mainKeywords;
     }
 
-    private static void initMainKeywords(){
+    private void initMainKeywords(){
         mainKeywords = new HashMap<>();
         mainKeywords.put("for", TokenType.FOR);
         mainKeywords.put("while", TokenType.WHILE);
@@ -48,18 +51,18 @@ public class Model{
         mainKeywords.put("}", TokenType.RIGHT_CBRACE);
     }
 
-    public static String getTokensFromFile(String filePath){
-        File input = new File(filePath);
-        StringBuilder rawInput = new StringBuilder();
-
-        try (BufferedReader reader = Files.newBufferedReader(input.toPath())) {
-            String line;
-            while ((line = reader.readLine()) != null) rawInput.append(line).append('\n');
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return rawInput.toString();
-    }
+//    public static String getTokensFromFile(String filePath){
+//        File input = new File(filePath);
+//        StringBuilder rawInput = new StringBuilder();
+//
+//        try (BufferedReader reader = Files.newBufferedReader(input.toPath())) {
+//            String line;
+//            while ((line = reader.readLine()) != null) rawInput.append(line).append('\n');
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return rawInput.toString();
+//    }
 
     private static String lexicalAnalyzer(String rawInput){
         Pattern operators = Pattern.compile("(?<=\s|^)(as|and|break|continue|def|elif|else|if|False|True|None|with|for|in|is|nor|not|return|while)(?=\s|:)");
