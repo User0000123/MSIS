@@ -9,9 +9,7 @@ public class PythonTokenizer {
     private static final String fileWithCodePath = "C:\\Users\\Aleksej\\Desktop\\in1.py";
 
     public static void main(String[] args) {
-        PythonInterpreter interpreter = new PythonInterpreter();
-        tokenize(interpreter, readCodeFromFile(fileWithCodePath));
-        interpreter.close();
+        tokenize(readCodeFromFile(fileWithCodePath));
     }
 
     private static String readCodeFromFile(String path){
@@ -28,22 +26,25 @@ public class PythonTokenizer {
         return res.toString();
     }
 
-    public static LinkedList<String> tokenize(PythonInterpreter interpreter,String code) {
+    public static LinkedList<Record> tokenize(String code) {
         StringWriter a = new StringWriter(100);
-        LinkedList<String> res = new LinkedList<>();
+        LinkedList<Record> res = new LinkedList<>();
 
-        interpreter.setIn(new StringReader(code));
-        interpreter.execfile("C:\\Users\\Aleksej\\Downloads\\jython2.7.3\\Lib\\tokenize.py");
-        interpreter.setOut(a);
+        try (PythonInterpreter interpreter = new PythonInterpreter()) {
+            interpreter.setIn(new StringReader(code));
+            interpreter.execfile("C:\\Users\\Aleksej\\Downloads\\jython2.7.3\\Lib\\tokenize.py");
+            interpreter.setOut(a);
+        }
 
-//        Scanner vConsole = new Scanner(a.toString());
-//        String[] lineGroup;
-//        while (vConsole.hasNextLine()){
-//            lineGroup = vConsole.nextLine().split(" ");
-//            if (lineGroup != null) for (int i = 0; i<lineGroup.length;i++) System.out.println(lineGroup[i]);
-//            if (lineGroup.contains("NAME")) res.add(new Token(Model.getTokenType()))
-//        }
+        Scanner vConsole = new Scanner(a.toString());
+        String[] lineGroup;
+        while (vConsole.hasNextLine()){
+            lineGroup = vConsole.nextLine().split(" ");
+            if (lineGroup != null) for (int i = 0; i<lineGroup.length;i++) System.out.println(lineGroup[i]);
+//            if (lineGroup.contains("NAME")) res.add(new TToken(Model.getTokenType()))
+        }
 
         return null;
     }
 }
+record TToken(String tokenValue, TokenType tokenType){}
