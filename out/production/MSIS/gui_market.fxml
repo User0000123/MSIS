@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.Scene?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.stage.Stage?>
+
+<Stage title="Лабораторная работа №1" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controller">
+    <scene>
+        <Scene>
+            <AnchorPane prefHeight="600.0" prefWidth="800.0">
+               <children>
+                  <Button fx:id="btnLoadFromFile" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Загрузить из файла" />
+                  <Button fx:id="btnProcess" layoutX="153.0" layoutY="14.0" mnemonicParsing="false" text="Рассчитать" />
+                  <TableView fx:id="tvMetrics" layoutX="14.0" layoutY="54.0" prefHeight="532.0" prefWidth="770.0">
+                    <columns>
+                      <TableColumn prefWidth="75.0" text="C1" />
+                      <TableColumn prefWidth="75.0" text="C2" />
+                    </columns>
+                  </TableView>
+               </children>
+            </AnchorPane>
+        </Scene>
+    </scene>
+</Stage>
