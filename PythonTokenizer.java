@@ -19,16 +19,19 @@ public class PythonTokenizer {
             item = tokenFlow.get(i);
             next = i;
             if (item.tokenType()==TokenType.INNER_FUNCTION || item.tokenType()==TokenType.IDENTIFIER){
-                if (function()){
-                    System.out.println(item.tokenValue());
-                    function_numbers++;
-                }
+//                if (function()){
+//                    System.out.println(item.tokenValue());
+//                    function_numbers++;
+//                }
 //                if (assignment()){
 //                    System.out.println(item.tokenValue());
 //                    function_numbers++;
 //                }
             }
-
+//            if (item.tokenValue().equals("if") && ifChecking()){
+//                System.out.println(item.tokenValue()+tokenFlow.get(i+1).tokenValue());
+//                function_numbers++;
+//            }
 
         }
         System.out.println("FFF -> "+function_numbers);
@@ -118,20 +121,34 @@ public class PythonTokenizer {
 
     private static boolean expression(){
         int save = next;
-        return (retToSave(save) && termOP("(") && expression() && termOP(")")) ||
-                (retToSave(save) && operand() && checkArifmOperation() && expression()) ||
+        return (retToSave(save) && termOP("(") && expression() && termOP(")") && anyOperation() && expression()) ||
+                (retToSave(save) && termOP("(") && expression() && termOP(")")) ||
+                (retToSave(save) && operand() && anyOperation() && anyOperation() && expression()) ||
+                (retToSave(save) && operand() && anyOperation() && expression()) ||
                 (retToSave(save) && operand());
+    }
+
+    private static boolean anyOperation(){
+        int save = next;
+        return (retToSave(save) && checkArifmOperation()) ||
+                (retToSave(save) && term(TokenType.KEY_WORD));
     }
 
     private static boolean operand(){
         int save = next;
         return (retToSave(save) && term(TokenType.NUMBER))||
+                (retToSave(save) && method())||
+                (retToSave(save) && function())||
                 (retToSave(save) && getArrayElem()) ||
+                (retToSave(save) && term(TokenType.KEY_WORD)) ||
                 (retToSave(save) && term(TokenType.IDENTIFIER))||
                 (retToSave(save) && term(TokenType.STRING))||
-                (retToSave(save) && function())||
                 (retToSave(save) && termOP("[") && term(TokenType.STRING) && termOP("]") && termOP("*") && term(TokenType.NUMBER))||
                 (retToSave(save) && arrayCreating());
+    }
+
+    private static boolean method(){
+        return term(TokenType.IDENTIFIER) && termOP(".") && function();
     }
 
     private static boolean arrayCreating(){
@@ -152,12 +169,20 @@ public class PythonTokenizer {
     /*
         @@assignments detecting
     */
+
     private static boolean assignment(){
         int save = next;
         return (retToSave(save) && operand() && termOP("=") && expression());
     }
 
+    /*
+        @@recursive if detecting
+    */
 
+    private static boolean ifChecking(){
+        int save = next;
+        return (retToSave(save) && termOP("if") && expression() && termOP(":"));
+    }
 
 }
 record TToken(String tokenValue, TokenType tokenType){}
