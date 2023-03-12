@@ -12,4 +12,5 @@ public class TokensMap {
     static String inner_functions = "(abs|bool|bytes|chr|hash|len|pow|print|sorted|type|input|int|range)";
     static String identifiers = "[a-zA-Z_]+[a-zA-Z0-9_]*";
     static String build_in_vars = "(__name__)";
+    static String operations = "(\\+|\\-|\\/|\\*|\\>\\=|\\>|\\<\\=|\\<|\\=\\=)";
 }

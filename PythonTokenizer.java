@@ -76,7 +76,7 @@ public class PythonTokenizer {
             res.add(new TToken(lineGroup[2], getTokenType(lineGroup)));
         }
 
-       // res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
+        //res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
 
         return res;
     }
@@ -92,7 +92,8 @@ public class PythonTokenizer {
     private static boolean function(){
         int save = next;
         return (anyTypeOfFunction() && termOP("(") && params_enc() && termOP(")"))||
-                (retToSave(save) && anyTypeOfFunction() && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"));
+                (retToSave(save) && anyTypeOfFunction() && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"))||
+                (retToSave(save) && anyTypeOfFunction() && termOP("(") && term(TokenType.STRING) && termOP("*") && term(TokenType.NUMBER) && termOP(")"));
     }
 
     private static boolean anyTypeOfFunction(){
@@ -105,15 +106,39 @@ public class PythonTokenizer {
     private static boolean funct_params(){
         int save = next;
         return (retToSave(save) && term(TokenType.NUMBER))||
+                (retToSave(save) && getArrayElem()) ||
                 (retToSave(save) && term(TokenType.IDENTIFIER))||
                 (retToSave(save) && term(TokenType.STRING));
+    }
+
+    private static boolean getArrayElem(){
+        return (term(TokenType.IDENTIFIER) && termOP("[") && expression() && termOP("]"));
+    }
+
+    private static boolean expression(){
+        int save = next;
+        return (retToSave(save) && termOP("(") && expression() && termOP(")")) ||
+                (retToSave(save) && operand() && checkArifmOperation() && expression()) ||
+                (retToSave(save) && operand());
+    }
+
+    private static boolean operand(){
+        int save = next;
+        return (retToSave(save) && term(TokenType.IDENTIFIER)) ||
+                (retToSave(save) && term(TokenType.NUMBER)) ||
+                (retToSave(save) && term(TokenType.STRING)) ||
+                (retToSave(save) && function());
+    }
+
+    private static boolean checkArifmOperation(){
+        return tokenFlow.get(next++).tokenValue().matches(TokensMap.operations);
     }
 
     private static boolean params_enc(){
         int save = next;
         return (funct_params() && termOP(",") && params_enc()) ||
                 (retToSave(save) && funct_params()) ||
-                (retToSave(save) && Boolean.getBoolean("true"));
+                (retToSave(save));
     }
 
 }
