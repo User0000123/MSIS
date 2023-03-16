@@ -1,7 +1,7 @@
 import org.python.util.PythonInterpreter;
 import java.io.*;
-import java.net.InterfaceAddress;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 
@@ -10,31 +10,79 @@ public class PythonTokenizer {
     private static final String fileWithCodePath = "C:\\Users\\Aleksej\\Desktop\\in1.py";
     private static LinkedList<TToken> tokenFlow;
     private static int next = 0;
+    private static int LIMIT = 0;
 
     public static void main(String[] args) {
-        TToken item;
-        int function_numbers = 0;
+        System.out.println("All operators: "+countOperators());
+    }
+
+    private static int countOperators() {
+        HashMap<TToken, Integer> operators = new HashMap<>();
+        int unique_operators = 0;
+
         tokenFlow = tokenize(readCodeFromFile(fileWithCodePath));
-        for (int i = 0; i<tokenFlow.size();i++){
+        LIMIT = tokenFlow.size() - 1;
+        TToken item;
+        for (int i = 0; i < tokenFlow.size(); i++) {
             item = tokenFlow.get(i);
-            next = i;
-            if (item.tokenType()==TokenType.INNER_FUNCTION || item.tokenType()==TokenType.IDENTIFIER){
-//                if (function()){
+            if (item.tokenValue().matches(TokensMap.operations)) {
+//                 System.out.println(item.tokenValue());
+//                addToMap(operators, item);
+//                unique_operators++;
+//            } else if (item.tokenValue().matches(TokensMap.delimiters)) {
+//                addToMap(operators, item);
+//                unique_operators++;
+            } else if (item.tokenType() == TokenType.INNER_FUNCTION || item.tokenType() == TokenType.IDENTIFIER) {
+                if (retToSave(i) && formattedOutput()){
+                    getTokenFlowFromString(tokenFlow.get(i+3).tokenValue());
 //                    System.out.println(item.tokenValue());
-//                    function_numbers++;
+//                    addToMap(operators, item);
+                    unique_operators++;
+                }
+//                if (retToSave(i) && function()) {
+                   // System.out.println(item.tokenValue());
+//                    addToMap(operators, item);
+//                    unique_operators++;
 //                }
-//                if (assignment()){
-//                    System.out.println(item.tokenValue());
-//                    function_numbers++;
-//                }
+//                 if (retToSave(i) && assignment()) {
+//                      System.out.println(item.tokenValue());
+//                     addToMap(operators, tokenFlow.get(i));
+//                     unique_operators++;
+//                 }
             }
+            else if (retToSave(i) && ifStatement()){
+//                addToMap(operators, tokenFlow.get(i));
+//                System.out.println(tokenFlow.get(i+1).tokenValue());
+//                unique_operators++;
+            }
+            else if (item.tokenValue().matches(TokensMap.keyWords)){
+//                addToMap(operators, tokenFlow.get(i));
+//                System.out.println(tokenFlow.get(i).tokenValue());
+//                unique_operators++;
+            }
+        }
+//            else if (retToSave(i+1) && expressionWithBraces()) unique_operators++;
+
 //            if (item.tokenValue().equals("if") && ifChecking()){
 //                System.out.println(item.tokenValue()+tokenFlow.get(i+1).tokenValue());
 //                function_numbers++;
-//            }
+//    }
+//        printMap(operators);
+        return unique_operators;
+    }
 
-        }
-        System.out.println("FFF -> "+function_numbers);
+    private static LinkedList<TToken> getTokenFlowFromString(String string){
+        String[] operands = string.split("\\\\}");
+        for (String item: operands)System.out.println(item);
+        return tokenize(string);
+    }
+
+    private static void printMap(HashMap<TToken, Integer> map){
+        map.forEach((key, value) -> {System.out.println(key.tokenValue() + " count: "+ value);});
+    }
+
+    private static void addToMap(HashMap<TToken, Integer> map, TToken item){
+        if (map.putIfAbsent(item, 1) != null) map.replace(item,map.get(item)+1);
     }
 
     private static String readCodeFromFile(String path){
@@ -56,8 +104,10 @@ public class PythonTokenizer {
         switch (lineGroup[1]){
             case "NAME"->{
                 if (lineGroup[2].matches(TokensMap.keyWords)) res = TokenType.KEY_WORD;
+                else if (lineGroup[2].matches(TokensMap.logicalOPs)) res = TokenType.OPERATION;
                 else if (lineGroup[2].matches(TokensMap.inner_functions)) res = TokenType.INNER_FUNCTION;
-                else if (lineGroup[2].matches(TokensMap.identifiers)||(lineGroup[2].matches(TokensMap.build_in_vars))) res = TokenType.IDENTIFIER;
+                else if (lineGroup[2].matches(TokensMap.build_in_vars)) res = TokenType.BUILD_IN_VAR;
+                else if (lineGroup[2].matches(TokensMap.identifiers)) res = TokenType.IDENTIFIER;
             }
             case "STRING"->res = TokenType.STRING;
             case "NUMBER"->res = TokenType.NUMBER;
@@ -86,16 +136,18 @@ public class PythonTokenizer {
             res.add(new TToken(lineGroup[2], getTokenType(lineGroup)));
         }
 
-        //res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
+//        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
 
         return res;
     }
 
     private static boolean termOP(final String expected){
+        if (next>LIMIT) return false;
         return tokenFlow.get(next++).tokenValue().equals(expected);
     }
 
     private static boolean term(final TokenType expected){
+        if (next>LIMIT) return false;
         return tokenFlow.get(next++).tokenType() == expected;
     }
     /*
@@ -104,8 +156,12 @@ public class PythonTokenizer {
     private static boolean function(){
         int save = next;
         return (anyTypeOfFunction() && termOP("(") && params_enc() && termOP(")"))||
-                (retToSave(save) && anyTypeOfFunction() && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"))||
+                (retToSave(save) && formattedOutput())||
                 (retToSave(save) && anyTypeOfFunction() && termOP("(") && term(TokenType.STRING) && termOP("*") && term(TokenType.NUMBER) && termOP(")"));
+    }
+
+    private static boolean formattedOutput(){
+        return (termOP("print") && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"));
     }
 
     private static boolean anyTypeOfFunction(){
@@ -121,17 +177,20 @@ public class PythonTokenizer {
 
     private static boolean expression(){
         int save = next;
-        return (retToSave(save) && termOP("(") && expression() && termOP(")") && anyOperation() && expression()) ||
-                (retToSave(save) && termOP("(") && expression() && termOP(")")) ||
+        return expressionWithBraces() ||
                 (retToSave(save) && operand() && anyOperation() && anyOperation() && expression()) ||
                 (retToSave(save) && operand() && anyOperation() && expression()) ||
                 (retToSave(save) && operand());
     }
 
-    private static boolean anyOperation(){
+    private static boolean expressionWithBraces(){
         int save = next;
-        return (retToSave(save) && checkArifmOperation()) ||
-                (retToSave(save) && term(TokenType.KEY_WORD));
+        return (retToSave(save) && termOP("(") && expression() && termOP(")") && anyOperation() && expression()) ||
+                (retToSave(save) && termOP("(") && expression() && termOP(")"));
+    }
+
+    private static boolean anyOperation(){
+        return (checkArifmOperation());
     }
 
     private static boolean operand(){
@@ -140,6 +199,7 @@ public class PythonTokenizer {
                 (retToSave(save) && method())||
                 (retToSave(save) && function())||
                 (retToSave(save) && getArrayElem()) ||
+                (retToSave(save) && term(TokenType.BUILD_IN_VAR)) ||
                 (retToSave(save) && term(TokenType.KEY_WORD)) ||
                 (retToSave(save) && term(TokenType.IDENTIFIER))||
                 (retToSave(save) && term(TokenType.STRING))||
@@ -156,7 +216,9 @@ public class PythonTokenizer {
     }
 
     private static boolean checkArifmOperation(){
-        return tokenFlow.get(next++).tokenValue().matches(TokensMap.operations);
+        int save = next;
+        return (retToSave(save) && tokenFlow.get(next++).tokenValue().matches(TokensMap.operations))||
+                (retToSave(save) && tokenFlow.get(next++).tokenValue().matches(TokensMap.logicalOPs));
     }
 
     private static boolean params_enc(){
@@ -179,7 +241,36 @@ public class PythonTokenizer {
         @@recursive if detecting
     */
 
-    private static boolean ifChecking(){
+    private static boolean ifStatement(){
+        int save = next;
+        return (retToSave(save) && termOP("if") && expression() && termOP(":")) ||
+             (retToSave(save) && termOP("elif") && expression() && termOP(":"));
+    }
+    private static boolean whileStatement(){
+        int save = next;
+        return (retToSave(save) && termOP("while") && expression() && termOP(":"));
+    }
+    private static boolean forStatement(){
+        int save = next;
+        return (retToSave(save) && termOP("for") && identifierSequence() && termOP("in") && sequenceSN() && termOP(":"))||
+            (retToSave(save) && termOP("for") && identifierSequence() && termOP("in") && term(TokenType.IDENTIFIER) && termOP(":"))||
+            (retToSave(save) && termOP("for") && identifierSequence() && termOP("in") && termOP("range") && termOP("(") && params_enc() && termOP(")") && termOP(":"));
+    }
+
+    private static boolean sequenceSN(){
+        int save = next;
+        return  (retToSave(save) && term(TokenType.NUMBER) && termOP(",") && sequenceSN())||
+                (retToSave(save) && term(TokenType.STRING) && termOP(",") && sequenceSN())||
+                (retToSave(save) && term(TokenType.STRING))||
+                (retToSave(save) && term(TokenType.NUMBER));
+    }
+
+    private static boolean identifierSequence(){
+        int save = next;
+        return (retToSave(save) && term(TokenType.IDENTIFIER) && termOP(",") && identifierSequence()) ||
+                (retToSave(save) && term(TokenType.IDENTIFIER));
+    }
+    private static boolean Statement(){
         int save = next;
         return (retToSave(save) && termOP("if") && expression() && termOP(":"));
     }
