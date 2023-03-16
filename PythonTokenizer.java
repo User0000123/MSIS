@@ -13,54 +13,52 @@ public class PythonTokenizer {
     private static int LIMIT = 0;
 
     public static void main(String[] args) {
-        System.out.println("All operators: "+countOperators());
+        System.out.println("All operators: "+count());
     }
 
     private static void countLIMIT(){LIMIT = tokenFlow.size() - 1;}
 
-    private static int countOperators() {
+    private static int count() {
         HashMap<TToken, Integer> operators = new HashMap<>();
-        int operators_dictionary_size = 0;
+        HashMap<TToken, Integer> operands = new HashMap<>();
 
         tokenFlow = tokenize(readCodeFromFile(fileWithCodePath));
         countLIMIT();
+
         TToken item;
         for (int i = 0; i < tokenFlow.size(); i++) {
             item = tokenFlow.get(i);
-          /*  switch (item.tokenType()){
+            switch (item.tokenType()){
                 case OPERATION -> {
-                    if (item.tokenValue().matches(TokensMap.operations) || item.tokenValue().matches(TokensMap.delimiters)){
+                    if ((item.tokenValue().matches(TokensMap.operations)) ||
+                            (item.tokenValue().matches(TokensMap.delimiters)) ||
+                            (retToSave(i) && curlyBracketsEnc()) ||
+                            (retToSave(i) && (tokenFlow.get(i-1).tokenType() != TokenType.IDENTIFIER && tokenFlow.get(i-1).tokenType() != TokenType.INNER_FUNCTION) && expressionWithBraces()))
+                    {
                         addToMap(operators, item);
-                        operators_dictionary_size++;
                     }
                 }
                 case INNER_FUNCTION, IDENTIFIER -> {
-                    if (retToSave(i) && formattedOutput()) {
+                    if (retToSave(i) && formattedIO()) {
                         tokenFlow.addAll(i + 5, getTokenFlowFromString(tokenFlow.get(i + 3).tokenValue()));
                         countLIMIT();
                     }
-                    /*else if (retToSave(i) && function()) {
-                        System.out.println(item.tokenValue());
+                    if ((retToSave(i) && !tokenFlow.get(i-1).tokenValue().equals("def") && function()) ||
+                            (retToSave(i) && ifStatement()) ||
+                            (item.tokenValue().matches(TokensMap.keyWords)))
                         addToMap(operators, item);
-                        operators_dictionary_size++;
-                    }
-                    else if (retToSave(i) && assignment()) {
-                        System.out.println(item.tokenValue());
-                        addToMap(operators, tokenFlow.get(i));
-                        operators_dictionary_size++;
-                     }
-                    else if (retToSave(i) && ifStatement()){
-                        addToMap(operators, tokenFlow.get(i));
-                        System.out.println(tokenFlow.get(i+1).tokenValue());
-                        operators_dictionary_size++;
-                    }
-                    else if (item.tokenValue().matches(TokensMap.keyWords)){
-                        addToMap(operators, tokenFlow.get(i));
-                        System.out.println(tokenFlow.get(i).tokenValue());
-                        operators_dictionary_size++;
+                    if (retToSave(i) && assignment()) addToMap(operators, new TToken("=",TokenType.OPERATION));
+                }
+                case KEY_WORD -> {
+                    if (retToSave(i) && ifStatement()) addToMap(operators,new TToken("if..else(include elif)",TokenType.KEY_WORD));
+                    else if (retToSave(i) && whileStatement() ||
+                            (retToSave(i) && forStatement())
+                            )
+                    {
+                        addToMap(operators,item);
                     }
                 }
-            }*/
+            }
         }
 //            else if (retToSave(i+1) && expressionWithBraces()) operators_dictionary_size++;
 
@@ -68,8 +66,8 @@ public class PythonTokenizer {
 //                System.out.println(item.tokenValue()+tokenFlow.get(i+1).tokenValue());
 //                function_numbers++;
 //    }
-//        printMap(operators);
-        return operators_dictionary_size;
+        printMap(operators);
+        return 0;
     }
 
     private static LinkedList<TToken> getTokenFlowFromString(String string){
@@ -144,7 +142,7 @@ public class PythonTokenizer {
             res.add(new TToken(lineGroup[2], getTokenType(lineGroup)));
         }
 
-        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
+//        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
 
         return res;
     }
@@ -164,12 +162,14 @@ public class PythonTokenizer {
     private static boolean function(){
         int save = next;
         return (anyTypeOfFunction() && termOP("(") && params_enc() && termOP(")"))||
-                (retToSave(save) && formattedOutput())||
+                (retToSave(save) && formattedIO())||
                 (retToSave(save) && anyTypeOfFunction() && termOP("(") && term(TokenType.STRING) && termOP("*") && term(TokenType.NUMBER) && termOP(")"));
     }
 
-    private static boolean formattedOutput(){
-        return (termOP("print") && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"));
+    private static boolean formattedIO(){
+        int save = next;
+        return (termOP("input") && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"))||
+                (retToSave(save) && termOP("print") && termOP("(") && termOP("f") && term(TokenType.STRING) && termOP(")"));
     }
 
     private static boolean anyTypeOfFunction(){
@@ -277,6 +277,10 @@ public class PythonTokenizer {
         int save = next;
         return (retToSave(save) && term(TokenType.IDENTIFIER) && termOP(",") && identifierSequence()) ||
                 (retToSave(save) && term(TokenType.IDENTIFIER));
+    }
+
+    private static boolean curlyBracketsEnc(){
+        return (termOP("{") && params_enc() && termOP("}"));
     }
 
 }
