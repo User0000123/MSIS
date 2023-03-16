@@ -32,22 +32,29 @@ public class PythonTokenizer {
                 case OPERATION -> {
                     if ((item.tokenValue().matches(TokensMap.operations)) ||
                             (item.tokenValue().matches(TokensMap.delimiters)) ||
-                            (retToSave(i) && curlyBracketsEnc()) ||
-                            (retToSave(i) && (tokenFlow.get(i-1).tokenType() != TokenType.IDENTIFIER && tokenFlow.get(i-1).tokenType() != TokenType.INNER_FUNCTION) && expressionWithBraces()))
+                            (item.tokenValue().matches(TokensMap.logicalOPs)))
                     {
                         addToMap(operators, item);
                     }
+                    else if (retToSave(i) && (tokenFlow.get(i-1).tokenType() != TokenType.IDENTIFIER && tokenFlow.get(i-1).tokenType() != TokenType.INNER_FUNCTION) && expressionWithBraces())
+                        addToMap(operators, new TToken("()",TokenType.OPERATION));
+                    else if (retToSave(i) && curlyBracketsEnc()) addToMap(operators,new TToken("{}",TokenType.OPERATION));
+                    else if (retToSave(i) && (tokenFlow.get(i-1).tokenType() != TokenType.IDENTIFIER) && arrayCreating()) addToMap(operators, new TToken("[]",TokenType.OPERATION));
                 }
                 case INNER_FUNCTION, IDENTIFIER -> {
                     if (retToSave(i) && formattedIO()) {
                         tokenFlow.addAll(i + 5, getTokenFlowFromString(tokenFlow.get(i + 3).tokenValue()));
                         countLIMIT();
                     }
-                    if ((retToSave(i) && !tokenFlow.get(i-1).tokenValue().equals("def") && function()) ||
-                            (retToSave(i) && ifStatement()) ||
-                            (item.tokenValue().matches(TokensMap.keyWords)))
-                        addToMap(operators, item);
+                    if (!tokenFlow.get(i-1).tokenValue().equals("def")){
+                        if (retToSave(i) && function()) {
+                            addToMap(operators, item);
+                            if (!(tokenFlow.get(i-1).tokenType() == TokenType.UNKNOWN)) addToMap(operands, item);
+                        }
+                        else if (retToSave(i) && operand()) addToMap(operands, item);
+                    }
                     if (retToSave(i) && assignment()) addToMap(operators, new TToken("=",TokenType.OPERATION));
+                    if (retToSave(i) && getArrayElem()) addToMap(operators, new TToken("[]",TokenType.OPERATION));
                 }
                 case KEY_WORD -> {
                     if (retToSave(i) && ifStatement()) addToMap(operators,new TToken("if..else(include elif)",TokenType.KEY_WORD));
@@ -57,17 +64,15 @@ public class PythonTokenizer {
                     {
                         addToMap(operators,item);
                     }
+                    else if (item.tokenValue().equals("break") || item.tokenValue().equals("return") || item.tokenValue().equals("continue")) addToMap(operators, item);
+                }
+                case NUMBER, STRING, BUILD_IN_VAR -> {
+                    addToMap(operands,item);
                 }
             }
         }
-//            else if (retToSave(i+1) && expressionWithBraces()) operators_dictionary_size++;
-
-//            if (item.tokenValue().equals("if") && ifChecking()){
-//                System.out.println(item.tokenValue()+tokenFlow.get(i+1).tokenValue());
-//                function_numbers++;
-//    }
-        printMap(operators);
-        return 0;
+        printMap(operands);
+        return operands.size();
     }
 
     private static LinkedList<TToken> getTokenFlowFromString(String string){
@@ -87,8 +92,9 @@ public class PythonTokenizer {
         map.forEach((key, value) -> {System.out.println(key.tokenValue() + " count: "+ value);});
     }
 
-    private static void addToMap(HashMap<TToken, Integer> map, TToken item){
+    private static boolean addToMap(HashMap<TToken, Integer> map, TToken item){
         if (map.putIfAbsent(item, 1) != null) map.replace(item,map.get(item)+1);
+        return true;
     }
 
     private static String readCodeFromFile(String path){
