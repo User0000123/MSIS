@@ -16,65 +16,73 @@ public class PythonTokenizer {
         System.out.println("All operators: "+countOperators());
     }
 
+    private static void countLIMIT(){LIMIT = tokenFlow.size() - 1;}
+
     private static int countOperators() {
         HashMap<TToken, Integer> operators = new HashMap<>();
-        int unique_operators = 0;
+        int operators_dictionary_size = 0;
 
         tokenFlow = tokenize(readCodeFromFile(fileWithCodePath));
-        LIMIT = tokenFlow.size() - 1;
+        countLIMIT();
         TToken item;
         for (int i = 0; i < tokenFlow.size(); i++) {
             item = tokenFlow.get(i);
-            if (item.tokenValue().matches(TokensMap.operations)) {
-//                 System.out.println(item.tokenValue());
-//                addToMap(operators, item);
-//                unique_operators++;
-//            } else if (item.tokenValue().matches(TokensMap.delimiters)) {
-//                addToMap(operators, item);
-//                unique_operators++;
-            } else if (item.tokenType() == TokenType.INNER_FUNCTION || item.tokenType() == TokenType.IDENTIFIER) {
-                if (retToSave(i) && formattedOutput()){
-                    getTokenFlowFromString(tokenFlow.get(i+3).tokenValue());
-//                    System.out.println(item.tokenValue());
-//                    addToMap(operators, item);
-                    unique_operators++;
+          /*  switch (item.tokenType()){
+                case OPERATION -> {
+                    if (item.tokenValue().matches(TokensMap.operations) || item.tokenValue().matches(TokensMap.delimiters)){
+                        addToMap(operators, item);
+                        operators_dictionary_size++;
+                    }
                 }
-//                if (retToSave(i) && function()) {
-                   // System.out.println(item.tokenValue());
-//                    addToMap(operators, item);
-//                    unique_operators++;
-//                }
-//                 if (retToSave(i) && assignment()) {
-//                      System.out.println(item.tokenValue());
-//                     addToMap(operators, tokenFlow.get(i));
-//                     unique_operators++;
-//                 }
-            }
-            else if (retToSave(i) && ifStatement()){
-//                addToMap(operators, tokenFlow.get(i));
-//                System.out.println(tokenFlow.get(i+1).tokenValue());
-//                unique_operators++;
-            }
-            else if (item.tokenValue().matches(TokensMap.keyWords)){
-//                addToMap(operators, tokenFlow.get(i));
-//                System.out.println(tokenFlow.get(i).tokenValue());
-//                unique_operators++;
-            }
+                case INNER_FUNCTION, IDENTIFIER -> {
+                    if (retToSave(i) && formattedOutput()) {
+                        tokenFlow.addAll(i + 5, getTokenFlowFromString(tokenFlow.get(i + 3).tokenValue()));
+                        countLIMIT();
+                    }
+                    /*else if (retToSave(i) && function()) {
+                        System.out.println(item.tokenValue());
+                        addToMap(operators, item);
+                        operators_dictionary_size++;
+                    }
+                    else if (retToSave(i) && assignment()) {
+                        System.out.println(item.tokenValue());
+                        addToMap(operators, tokenFlow.get(i));
+                        operators_dictionary_size++;
+                     }
+                    else if (retToSave(i) && ifStatement()){
+                        addToMap(operators, tokenFlow.get(i));
+                        System.out.println(tokenFlow.get(i+1).tokenValue());
+                        operators_dictionary_size++;
+                    }
+                    else if (item.tokenValue().matches(TokensMap.keyWords)){
+                        addToMap(operators, tokenFlow.get(i));
+                        System.out.println(tokenFlow.get(i).tokenValue());
+                        operators_dictionary_size++;
+                    }
+                }
+            }*/
         }
-//            else if (retToSave(i+1) && expressionWithBraces()) unique_operators++;
+//            else if (retToSave(i+1) && expressionWithBraces()) operators_dictionary_size++;
 
 //            if (item.tokenValue().equals("if") && ifChecking()){
 //                System.out.println(item.tokenValue()+tokenFlow.get(i+1).tokenValue());
 //                function_numbers++;
 //    }
 //        printMap(operators);
-        return unique_operators;
+        return operators_dictionary_size;
     }
 
     private static LinkedList<TToken> getTokenFlowFromString(String string){
-        String[] operands = string.split("\\\\}");
-        for (String item: operands)System.out.println(item);
-        return tokenize(string);
+        StringBuilder params = new StringBuilder(string);
+        StringBuilder result = new StringBuilder();
+        int start, end;
+
+        while ((start = params.indexOf("{")) >= 0 && (end = params.indexOf("}")) >= 0){
+            result.append(params.substring(start,end+1));
+            params.delete(start, end+1);
+        }
+
+        return tokenize(result.toString());
     }
 
     private static void printMap(HashMap<TToken, Integer> map){
@@ -136,7 +144,7 @@ public class PythonTokenizer {
             res.add(new TToken(lineGroup[2], getTokenType(lineGroup)));
         }
 
-//        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
+        res.forEach(item -> {System.out.println(item.tokenValue() +" "+ item.tokenType());});
 
         return res;
     }
@@ -269,10 +277,6 @@ public class PythonTokenizer {
         int save = next;
         return (retToSave(save) && term(TokenType.IDENTIFIER) && termOP(",") && identifierSequence()) ||
                 (retToSave(save) && term(TokenType.IDENTIFIER));
-    }
-    private static boolean Statement(){
-        int save = next;
-        return (retToSave(save) && termOP("if") && expression() && termOP(":"));
     }
 
 }
