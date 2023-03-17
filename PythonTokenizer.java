@@ -1,3 +1,4 @@
+import jnr.ffi.annotations.In;
 import org.python.util.PythonInterpreter;
 import java.io.*;
 import java.nio.file.Files;
@@ -7,22 +8,19 @@ import java.util.Scanner;
 
 public class PythonTokenizer {
 
-    private static final String fileWithCodePath = "C:\\Users\\Aleksej\\Desktop\\in1.py";
-    private static LinkedList<TToken> tokenFlow;
+    private static final String fileWithCodePath = "C:\\Users\\Aleksej\\Desktop\\in1.txt";
+    public static LinkedList<TToken> tokenFlow;
     private static int next = 0;
     private static int LIMIT = 0;
-
-    public static void main(String[] args) {
-        System.out.println("All operators: "+count());
-    }
+    public static HashMap<TToken, Integer> operators = new HashMap<>();
+    public static HashMap<TToken, Integer> operands = new HashMap<>();
 
     private static void countLIMIT(){LIMIT = tokenFlow.size() - 1;}
 
-    private static int count() {
-        HashMap<TToken, Integer> operators = new HashMap<>();
-        HashMap<TToken, Integer> operands = new HashMap<>();
-
-        tokenFlow = tokenize(readCodeFromFile(fileWithCodePath));
+    public static void count() {
+        operators.clear();
+        operands.clear();
+        //tokenFlow = tokenize(readCodeFromFile(fileWithCodePath));
         countLIMIT();
 
         TToken item;
@@ -71,8 +69,12 @@ public class PythonTokenizer {
                 }
             }
         }
-        printMap(operands);
-        return operands.size();
+    }
+
+    public static int getSum(HashMap<TToken,Integer> hashMap){
+        int sum=0;
+        for (Integer count:hashMap.values()) sum+=count;
+        return sum;
     }
 
     private static LinkedList<TToken> getTokenFlowFromString(String string){

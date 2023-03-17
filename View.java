@@ -16,7 +16,6 @@ public class View extends Application{
     public void start(Stage stage) throws IOException {
         stage = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("gui_market.fxml")));
         stage.show();
-
         Interface = stage;
     }
 }
